@@ -29,6 +29,7 @@
         <PackageReference Include="Nice3point.Revit.Extensions" Version="2025.0.1" />
         <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
         <PackageReference Include="MaterialDesignColors" Version="3.1.0" />
+        <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2025.0.0" />
     </ItemGroup>
 
     <ItemGroup>
