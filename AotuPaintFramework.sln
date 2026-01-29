@@ -1,0 +1,28 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AotuPaintFramework", "Source\AotuPaintFramework\AotuPaintFramework.csproj", "{8A9F6D2E-1B3C-4E5F-9A7D-2C8E4F6B1A3D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build", "Source\Build\Build.csproj", "{7B8E5C3F-2A4D-4F6E-8B9C-3D7F5E8A2B4C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A9F6D2E-1B3C-4E5F-9A7D-2C8E4F6B1A3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A9F6D2E-1B3C-4E5F-9A7D-2C8E4F6B1A3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A9F6D2E-1B3C-4E5F-9A7D-2C8E4F6B1A3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A9F6D2E-1B3C-4E5F-9A7D-2C8E4F6B1A3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B8E5C3F-2A4D-4F6E-8B9C-3D7F5E8A2B4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B8E5C3F-2A4D-4F6E-8B9C-3D7F5E8A2B4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B8E5C3F-2A4D-4F6E-8B9C-3D7F5E8A2B4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B8E5C3F-2A4D-4F6E-8B9C-3D7F5E8A2B4C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
