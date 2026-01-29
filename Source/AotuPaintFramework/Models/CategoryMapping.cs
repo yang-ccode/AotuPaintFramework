@@ -47,6 +47,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the parameter name to check for filtering elements.
+        /// </summary>
         public string? Parameter
         {
             get => _parameter;
