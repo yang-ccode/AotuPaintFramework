@@ -3,6 +3,10 @@ using System.Runtime.CompilerServices;
 
 namespace AotuPaintFramework.Models
 {
+    /// <summary>
+    /// Model representing a category to material mapping rule for automatic material painting.
+    /// Used to define which materials should be applied to elements based on their category and parameter values.
+    /// </summary>
     public class CategoryMapping : INotifyPropertyChanged
     {
         private bool _isChecked;
@@ -11,6 +15,9 @@ namespace AotuPaintFramework.Models
         private string? _parameterValue;
         private string? _material;
 
+        /// <summary>
+        /// Gets or sets whether this mapping rule is enabled.
+        /// </summary>
         public bool IsChecked
         {
             get => _isChecked;
@@ -24,6 +31,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the Revit element category to filter by.
+        /// </summary>
         public string? Category
         {
             get => _category;
@@ -50,6 +60,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the parameter value to match against.
+        /// </summary>
         public string? ParameterValue
         {
             get => _parameterValue;
@@ -63,6 +76,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the material name to apply when the category and parameter conditions are met.
+        /// </summary>
         public string? Material
         {
             get => _material;

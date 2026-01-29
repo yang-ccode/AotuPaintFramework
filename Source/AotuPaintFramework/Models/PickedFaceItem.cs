@@ -4,9 +4,10 @@ using System.Runtime.CompilerServices;
 namespace AotuPaintFramework.Models
 {
     /// <summary>
-    /// Model for picked faces in the interface list
-    /// Note: Face and Plane properties are typed as object to avoid Revit API dependency at compile time
-    /// At runtime, they should be cast to Autodesk.Revit.DB.Face and Autodesk.Revit.DB.Plane respectively
+    /// Model for picked faces in the interface list.
+    /// Note: Face and Plane properties are typed as object to avoid Revit API dependency at compile time.
+    /// At runtime, they should be cast to Autodesk.Revit.DB.Face and Autodesk.Revit.DB.Plane respectively.
+    /// Warning: These Revit API objects are not serializable. This class is intended for runtime use only.
     /// </summary>
     public class PickedFaceItem : INotifyPropertyChanged
     {
@@ -17,6 +18,9 @@ namespace AotuPaintFramework.Models
         private object? _face;
         private object? _plane;
 
+        /// <summary>
+        /// Gets or sets whether this face is selected for painting.
+        /// </summary>
         public bool IsChecked
         {
             get => _isChecked;
@@ -30,6 +34,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the display name of the face.
+        /// </summary>
         public string? FaceName
         {
             get => _faceName;
@@ -43,6 +50,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the category name of the element containing this face.
+        /// </summary>
         public string? CategoryName
         {
             get => _categoryName;
@@ -56,6 +66,9 @@ namespace AotuPaintFramework.Models
             }
         }
 
+        /// <summary>
+        /// Gets or sets the Revit element ID containing this face.
+        /// </summary>
         public int ElementId
         {
             get => _elementId;
@@ -70,7 +83,8 @@ namespace AotuPaintFramework.Models
         }
 
         /// <summary>
-        /// The picked face (Autodesk.Revit.DB.Face at runtime)
+        /// Gets or sets the picked face (Autodesk.Revit.DB.Face at runtime).
+        /// Uses reference equality for change detection.
         /// </summary>
         public object? Face
         {
@@ -86,7 +100,8 @@ namespace AotuPaintFramework.Models
         }
 
         /// <summary>
-        /// The plane of the face (Autodesk.Revit.DB.Plane at runtime)
+        /// Gets or sets the plane of the face (Autodesk.Revit.DB.Plane at runtime).
+        /// Uses reference equality for change detection.
         /// </summary>
         public object? Plane
         {
