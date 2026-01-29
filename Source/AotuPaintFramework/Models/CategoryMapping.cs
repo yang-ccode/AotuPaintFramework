@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -14,6 +15,11 @@ namespace AotuPaintFramework.Models
         private string? _parameter;
         private string? _parameterValue;
         private string? _material;
+
+        public CategoryMapping()
+        {
+            AvailableParameterValues = new ObservableCollection<string>();
+        }
 
         /// <summary>
         /// Gets or sets whether this mapping rule is enabled.
@@ -94,6 +100,12 @@ namespace AotuPaintFramework.Models
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the collection of available parameter values for the selected parameter.
+        /// Populated dynamically when a parameter is selected.
+        /// </summary>
+        public ObservableCollection<string> AvailableParameterValues { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
