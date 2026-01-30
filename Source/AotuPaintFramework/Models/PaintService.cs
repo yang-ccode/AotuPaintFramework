@@ -50,9 +50,6 @@ namespace AotuPaintFramework.Models
                 int paintedCount = 0;
                 foreach (Face face in solid.Faces)
                 {
-                    if (face == null)
-                        continue;
-
                     if (GeometryHelper.IsSideFace(face) && !GeometryHelper.IsIntersectingFace(face, element, doc))
                     {
                         try
@@ -114,9 +111,6 @@ namespace AotuPaintFramework.Models
                 int paintedCount = 0;
                 foreach (Face face in solid.Faces)
                 {
-                    if (face == null)
-                        continue;
-
                     if (GeometryHelper.IsBottomFace(face))
                     {
                         try
@@ -194,9 +188,6 @@ namespace AotuPaintFramework.Models
                     var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
                     foreach (var face in facesOnPlane)
                     {
-                        if (face == null)
-                            continue;
-
                         try
                         {
                             doc.Paint(element.Id, face, materialId);
@@ -249,9 +240,6 @@ namespace AotuPaintFramework.Models
                 int removedCount = 0;
                 foreach (Face face in solid.Faces)
                 {
-                    if (face == null)
-                        continue;
-
                     if (GeometryHelper.IsSideFace(face))
                     {
                         try
@@ -306,9 +294,6 @@ namespace AotuPaintFramework.Models
                 int removedCount = 0;
                 foreach (Face face in solid.Faces)
                 {
-                    if (face == null)
-                        continue;
-
                     if (GeometryHelper.IsBottomFace(face))
                     {
                         try
@@ -379,9 +364,6 @@ namespace AotuPaintFramework.Models
                     var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
                     foreach (var face in facesOnPlane)
                     {
-                        if (face == null)
-                            continue;
-
                         try
                         {
                             doc.RemovePaint(element.Id, face);

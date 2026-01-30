@@ -29,14 +29,15 @@ namespace AotuPaintFramework.ViewModels
 
         public MaterialPaintViewModel(UIDocument uiDocument)
         {
+            // Validate parameter before entering try-catch to avoid double-logging
+            if (uiDocument == null)
+            {
+                Logger.Error(new ArgumentNullException(nameof(uiDocument)), "UIDocument is null in MaterialPaintViewModel constructor");
+                throw new ArgumentNullException(nameof(uiDocument));
+            }
+
             try
             {
-                if (uiDocument == null)
-                {
-                    Logger.Error(new ArgumentNullException(nameof(uiDocument)), "UIDocument is null in MaterialPaintViewModel constructor");
-                    throw new ArgumentNullException(nameof(uiDocument));
-                }
-
                 _uiDocument = uiDocument;
                 _selectedElements = new List<Element>();
 

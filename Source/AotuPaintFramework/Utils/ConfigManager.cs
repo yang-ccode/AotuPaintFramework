@@ -31,14 +31,15 @@ namespace AotuPaintFramework.Utils
         /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
         public static void SaveConfiguration(MappingConfiguration config)
         {
+            // Validate parameter before try-catch to avoid double-logging
+            if (config == null)
+            {
+                Logger.Warning("Configuration is null in SaveConfiguration");
+                throw new ArgumentNullException(nameof(config));
+            }
+
             try
             {
-                if (config == null)
-                {
-                    Logger.Warning("Configuration is null in SaveConfiguration");
-                    throw new ArgumentNullException(nameof(config));
-                }
-
                 Logger.Info($"Saving configuration to {ConfigFilePath}");
 
                 if (!Directory.Exists(AppDataFolder))
@@ -51,10 +52,6 @@ namespace AotuPaintFramework.Utils
                 File.WriteAllText(ConfigFilePath, jsonContent);
                 
                 Logger.Info("Configuration saved successfully");
-            }
-            catch (ArgumentNullException)
-            {
-                throw;
             }
             catch (Exception ex)
             {

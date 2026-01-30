@@ -45,9 +45,6 @@ namespace AotuPaintFramework.Models
 
                 foreach (var geometryObject in geometryElement)
                 {
-                    if (geometryObject == null)
-                        continue;
-
                     if (geometryObject is Solid solid && solid.Volume > DefaultTolerance)
                         return solid;
 
@@ -58,9 +55,6 @@ namespace AotuPaintFramework.Models
                         {
                             foreach (var instObj in instanceGeometry)
                             {
-                                if (instObj == null)
-                                    continue;
-
                                 if (instObj is Solid instSolid && instSolid.Volume > DefaultTolerance)
                                     return instSolid;
                             }
@@ -187,14 +181,10 @@ namespace AotuPaintFramework.Models
                 for (int i = 0; i < mesh.NumTriangles; i++)
                 {
                     var triangle = mesh.get_Triangle(i);
-                    if (triangle == null)
-                        continue;
 
                     for (int j = 0; j < 3; j++)
                     {
                         var vertex = triangle.get_Vertex(j);
-                        if (vertex == null)
-                            continue;
 
                         if (min == null)
                         {
@@ -207,14 +197,10 @@ namespace AotuPaintFramework.Models
                                 System.Math.Min(min.X, vertex.X),
                                 System.Math.Min(min.Y, vertex.Y),
                                 System.Math.Min(min.Z, vertex.Z));
-                            
-                            if (max != null)
-                            {
-                                max = new XYZ(
-                                    System.Math.Max(max.X, vertex.X),
-                                    System.Math.Max(max.Y, vertex.Y),
-                                    System.Math.Max(max.Z, vertex.Z));
-                            }
+                            max = new XYZ(
+                                System.Math.Max(max!.X, vertex.X),
+                                System.Math.Max(max.Y, vertex.Y),
+                                System.Math.Max(max.Z, vertex.Z));
                         }
                     }
                 }
@@ -237,9 +223,6 @@ namespace AotuPaintFramework.Models
 
                 foreach (var otherElement in collector)
                 {
-                    if (otherElement == null)
-                        continue;
-
                     // Skip the same element
                     if (otherElement.Id.Value == element.Id.Value)
                         continue;
@@ -340,9 +323,6 @@ namespace AotuPaintFramework.Models
 
                 foreach (Face face in solid.Faces)
                 {
-                    if (face == null)
-                        continue;
-
                     if (IsFaceOnPlane(face, plane))
                         result.Add(face);
                 }
