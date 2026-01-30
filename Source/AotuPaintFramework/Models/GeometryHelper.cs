@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using AotuPaintFramework.Utils;
 
 namespace AotuPaintFramework.Models
 {
@@ -19,40 +21,54 @@ namespace AotuPaintFramework.Models
         /// <returns>The first solid found, or null if no solid exists.</returns>
         public static Solid? GetElementSolid(Element element)
         {
-            if (element == null)
-                return null;
-
-            var options = new Options
+            try
             {
-                ComputeReferences = true,
-                DetailLevel = ViewDetailLevel.Fine,
-                IncludeNonVisibleObjects = false
-            };
-
-            var geometryElement = element.get_Geometry(options);
-            if (geometryElement == null)
-                return null;
-
-            foreach (var geometryObject in geometryElement)
-            {
-                if (geometryObject is Solid solid && solid.Volume > DefaultTolerance)
-                    return solid;
-
-                if (geometryObject is GeometryInstance instance)
+                if (element == null)
                 {
-                    var instanceGeometry = instance.GetInstanceGeometry();
-                    if (instanceGeometry != null)
+                    Logger.Warning("GetElementSolid called with null element");
+                    return null;
+                }
+
+                var options = new Options
+                {
+                    ComputeReferences = true,
+                    DetailLevel = ViewDetailLevel.Fine,
+                    IncludeNonVisibleObjects = false
+                };
+
+                var geometryElement = element.get_Geometry(options);
+                if (geometryElement == null)
+                {
+                    Logger.Warning($"No geometry found for element {element.Id.Value}");
+                    return null;
+                }
+
+                foreach (var geometryObject in geometryElement)
+                {
+                    if (geometryObject is Solid solid && solid.Volume > DefaultTolerance)
+                        return solid;
+
+                    if (geometryObject is GeometryInstance instance)
                     {
-                        foreach (var instObj in instanceGeometry)
+                        var instanceGeometry = instance.GetInstanceGeometry();
+                        if (instanceGeometry != null)
                         {
-                            if (instObj is Solid instSolid && instSolid.Volume > DefaultTolerance)
-                                return instSolid;
+                            foreach (var instObj in instanceGeometry)
+                            {
+                                if (instObj is Solid instSolid && instSolid.Volume > DefaultTolerance)
+                                    return instSolid;
+                            }
                         }
                     }
                 }
-            }
 
-            return null;
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error extracting solid geometry from element {element?.Id.Value}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -105,69 +121,80 @@ namespace AotuPaintFramework.Models
         /// <returns>True if the face intersects with other elements, false otherwise.</returns>
         public static bool IsIntersectingFace(Face face, Element element, Document doc)
         {
-            if (face == null || element == null || doc == null)
-                return false;
-
-            // Get mesh triangulation to find bounds in XYZ coordinates
-            var mesh = face.Triangulate();
-            if (mesh == null || mesh.NumTriangles == 0)
-                return false;
-
-            // Calculate bounding box from mesh vertices
-            XYZ? min = null;
-            XYZ? max = null;
-
-            for (int i = 0; i < mesh.NumTriangles; i++)
+            try
             {
-                var triangle = mesh.get_Triangle(i);
-                for (int j = 0; j < 3; j++)
+                if (face == null || element == null || doc == null)
                 {
-                    var vertex = triangle.get_Vertex(j);
-                    if (min == null)
+                    Logger.Warning($"IsIntersectingFace called with null parameters: face={face != null}, element={element != null}, doc={doc != null}");
+                    return false;
+                }
+
+                // Get mesh triangulation to find bounds in XYZ coordinates
+                var mesh = face.Triangulate();
+                if (mesh == null || mesh.NumTriangles == 0)
+                    return false;
+
+                // Calculate bounding box from mesh vertices
+                XYZ? min = null;
+                XYZ? max = null;
+
+                for (int i = 0; i < mesh.NumTriangles; i++)
+                {
+                    var triangle = mesh.get_Triangle(i);
+                    for (int j = 0; j < 3; j++)
                     {
-                        min = vertex;
-                        max = vertex;
-                    }
-                    else
-                    {
-                        min = new XYZ(
-                            System.Math.Min(min.X, vertex.X),
-                            System.Math.Min(min.Y, vertex.Y),
-                            System.Math.Min(min.Z, vertex.Z));
-                        max = new XYZ(
-                            System.Math.Max(max.X, vertex.X),
-                            System.Math.Max(max.Y, vertex.Y),
-                            System.Math.Max(max.Z, vertex.Z));
+                        var vertex = triangle.get_Vertex(j);
+                        if (min == null)
+                        {
+                            min = vertex;
+                            max = vertex;
+                        }
+                        else
+                        {
+                            min = new XYZ(
+                                System.Math.Min(min.X, vertex.X),
+                                System.Math.Min(min.Y, vertex.Y),
+                                System.Math.Min(min.Z, vertex.Z));
+                            max = new XYZ(
+                                System.Math.Max(max!.X, vertex.X),
+                                System.Math.Max(max.Y, vertex.Y),
+                                System.Math.Max(max.Z, vertex.Z));
+                        }
                     }
                 }
-            }
 
-            if (min == null || max == null)
+                if (min == null || max == null)
+                    return false;
+
+                // Expand bounding box slightly for intersection detection
+                var minExpanded = min - new XYZ(DefaultTolerance, DefaultTolerance, DefaultTolerance);
+                var maxExpanded = max + new XYZ(DefaultTolerance, DefaultTolerance, DefaultTolerance);
+                var outline = new Outline(minExpanded, maxExpanded);
+
+                var bboxFilter = new BoundingBoxIntersectsFilter(outline);
+                var collector = new FilteredElementCollector(doc)
+                    .WherePasses(bboxFilter)
+                    .WhereElementIsNotElementType();
+
+                foreach (var otherElement in collector)
+                {
+                    // Skip the same element
+                    if (otherElement.Id.Value == element.Id.Value)
+                        continue;
+
+                    // Check if other element has solid geometry
+                    var otherSolid = GetElementSolid(otherElement);
+                    if (otherSolid != null && otherSolid.Volume > DefaultTolerance)
+                        return true;
+                }
+
                 return false;
-
-            // Expand bounding box slightly for intersection detection
-            var minExpanded = min - new XYZ(DefaultTolerance, DefaultTolerance, DefaultTolerance);
-            var maxExpanded = max + new XYZ(DefaultTolerance, DefaultTolerance, DefaultTolerance);
-            var outline = new Outline(minExpanded, maxExpanded);
-
-            var bboxFilter = new BoundingBoxIntersectsFilter(outline);
-            var collector = new FilteredElementCollector(doc)
-                .WherePasses(bboxFilter)
-                .WhereElementIsNotElementType();
-
-            foreach (var otherElement in collector)
-            {
-                // Skip the same element
-                if (otherElement.Id.Value == element.Id.Value)
-                    continue;
-
-                // Check if other element has solid geometry
-                var otherSolid = GetElementSolid(otherElement);
-                if (otherSolid != null && otherSolid.Volume > DefaultTolerance)
-                    return true;
             }
-
-            return false;
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error checking if face intersects for element {element?.Id.Value}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -211,20 +238,31 @@ namespace AotuPaintFramework.Models
         {
             var result = new List<Face>();
 
-            if (element == null || plane == null)
-                return result;
-
-            var solid = GetElementSolid(element);
-            if (solid == null)
-                return result;
-
-            foreach (Face face in solid.Faces)
+            try
             {
-                if (IsFaceOnPlane(face, plane))
-                    result.Add(face);
-            }
+                if (element == null || plane == null)
+                {
+                    Logger.Warning($"GetFacesOnPlane called with null parameters: element={element != null}, plane={plane != null}");
+                    return result;
+                }
 
-            return result;
+                var solid = GetElementSolid(element);
+                if (solid == null)
+                    return result;
+
+                foreach (Face face in solid.Faces)
+                {
+                    if (IsFaceOnPlane(face, plane))
+                        result.Add(face);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error getting faces on plane for element {element?.Id.Value}");
+                return result;
+            }
         }
     }
 }
