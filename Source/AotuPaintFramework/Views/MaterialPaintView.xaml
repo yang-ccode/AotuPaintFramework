@@ -3,25 +3,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="Material Paint Tool"
-        Height="700" Width="900"
+        Height="600"
+        Width="800"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource MaterialDesignPaper}"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        FontFamily="{DynamicResource MaterialDesignFont}">
+        Background="White">
 
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        
-        <!-- DataGrid Style -->
-        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="8,4"/>
-        </Style>
-        
-        <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- White background with Blue accent -->
+                <materialDesign:BundledTheme BaseTheme="Light" 
+                                            PrimaryColor="DeepPurple" 
+                                            SecondaryColor="Lime" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Add BooleanToVisibilityConverter -->
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -41,8 +40,7 @@
                 Command="{Binding SelectElementCommand}"
                 Style="{StaticResource MaterialDesignRaisedButton}"
                 Height="40"
-                Margin="0,0,0,12"
-                materialDesign:ButtonAssist.CornerRadius="4"/>
+                Margin="0,0,0,12"/>
 
         <!-- Categories Section Header -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
@@ -50,13 +48,11 @@
                     Command="{Binding CheckAllCommand}"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
                     Height="32"
-                    Margin="0,0,8,0"
-                    materialDesign:ButtonAssist.CornerRadius="4"/>
+                    Margin="0,0,8,0"/>
             <Button Content="Uncheck all"
                     Command="{Binding UncheckAllCommand}"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                    Height="32"
-                    materialDesign:ButtonAssist.CornerRadius="4"/>
+                    Height="32"/>
         </StackPanel>
 
         <!-- Categories DataGrid -->
@@ -70,16 +66,12 @@
                   SelectionMode="Single"
                   HeadersVisibility="Column"
                   RowHeight="40"
-                  Margin="0,0,0,12"
-                  materialDesign:DataGridAssist.CellPadding="8,4"
-                  materialDesign:DataGridAssist.ColumnHeaderPadding="8,4">
+                  Margin="0,0,0,12">
             <DataGrid.Columns>
                 <!-- Checkbox Column -->
                 <DataGridCheckBoxColumn Header="" 
                                         Binding="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}"
-                                        Width="50"
-                                        ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
-                                        EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"/>
+                                        Width="50"/>
                 
                 <!-- Category Column -->
                 <DataGridTextColumn Header="Category" 
@@ -93,20 +85,7 @@
                         <DataTemplate>
                             <ComboBox ItemsSource="{Binding DataContext.AvailableParameters, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding Parameter, UpdateSourceTrigger=PropertyChanged}"
-                                      materialDesign:HintAssist.Hint="Select Parameter"
-                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                      Margin="4,2">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                                <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItem}">
-                                        <EventSetter Event="Selected" Handler="OnParameterChanged"/>
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
+                                      Margin="4,2"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -117,15 +96,7 @@
                         <DataTemplate>
                             <ComboBox ItemsSource="{Binding AvailableParameterValues}"
                                       SelectedItem="{Binding ParameterValue, UpdateSourceTrigger=PropertyChanged}"
-                                      materialDesign:HintAssist.Hint="Select Value"
-                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                      Margin="4,2">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                            </ComboBox>
+                                      Margin="4,2"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -136,15 +107,7 @@
                         <DataTemplate>
                             <ComboBox ItemsSource="{Binding DataContext.AvailableMaterials, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding Material, UpdateSourceTrigger=PropertyChanged}"
-                                      materialDesign:HintAssist.Hint="Select Material"
-                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                      Margin="4,2">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                            </ComboBox>
+                                      Margin="4,2"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -155,15 +118,12 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12">
             <CheckBox Content="Side Face" 
                       IsChecked="{Binding IsSideFaceChecked}"
-                      Style="{StaticResource MaterialDesignCheckBox}"
                       Margin="0,0,24,0"/>
             <CheckBox Content="Bottom Face" 
                       IsChecked="{Binding IsBottomFaceChecked}"
-                      Style="{StaticResource MaterialDesignCheckBox}"
                       Margin="0,0,24,0"/>
             <CheckBox Content="Interfaces" 
-                      IsChecked="{Binding IsInterfacesChecked}"
-                      Style="{StaticResource MaterialDesignCheckBox}"/>
+                      IsChecked="{Binding IsInterfacesChecked}"/>
         </StackPanel>
 
         <!-- Interfaces Section -->
@@ -180,46 +140,36 @@
                             Command="{Binding PickFacesCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Height="32"
-                            Margin="0,0,8,0"
-                            materialDesign:ButtonAssist.CornerRadius="4"/>
+                            Margin="0,0,8,0"/>
                     <Button Content="Clear All"
                             Command="{Binding ClearAllFacesCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Height="32"
-                            Margin="0,0,16,0"
-                            materialDesign:ButtonAssist.CornerRadius="4"/>
+                            Margin="0,0,16,0"/>
                     <TextBlock Text="{Binding SelectedFacesCount, StringFormat='Đã chọn: {0} faces'}"
-                               VerticalAlignment="Center"
-                               Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                               VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Faces ListBox -->
                 <ListBox ItemsSource="{Binding PickedFaces}"
                          MaxHeight="200"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         Style="{StaticResource MaterialDesignListBox}">
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="0,4">
                                 <CheckBox IsChecked="{Binding IsChecked}"
-                                          Style="{StaticResource MaterialDesignCheckBox}"
                                           Margin="0,0,8,0"/>
                                 <TextBlock VerticalAlignment="Center">
                                     <Run Text="{Binding FaceName, Mode=OneWay}"/>
-                                    <Run Text=" - " Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                    <Run Text="{Binding CategoryName, Mode=OneWay}" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                    <Run Text=" [ID: " Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                    <Run Text="{Binding ElementId, Mode=OneWay}" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                    <Run Text="]" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    <Run Text=" - "/>
+                                    <Run Text="{Binding CategoryName, Mode=OneWay}"/>
+                                    <Run Text=" [ID: "/>
+                                    <Run Text="{Binding ElementId, Mode=OneWay}"/>
+                                    <Run Text="]"/>
                                 </TextBlock>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                            <EventSetter Event="MouseDown" Handler="OnFaceItemClicked"/>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
                 </ListBox>
             </StackPanel>
         </GroupBox>
@@ -245,19 +195,16 @@
                     Command="{Binding RemovePaintCommand}"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
                     Height="36"
-                    Margin="0,0,8,0"
-                    materialDesign:ButtonAssist.CornerRadius="4"/>
+                    Margin="0,0,8,0"/>
             <Button Content="Paint"
                     Command="{Binding PaintCommand}"
                     Style="{StaticResource MaterialDesignRaisedButton}"
                     Height="36"
-                    Margin="0,0,8,0"
-                    materialDesign:ButtonAssist.CornerRadius="4"/>
+                    Margin="0,0,8,0"/>
             <Button Content="Close"
                     Command="{Binding CloseCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Height="36"
-                    materialDesign:ButtonAssist.CornerRadius="4"/>
+                    Height="36"/>
         </StackPanel>
     </Grid>
 </Window>

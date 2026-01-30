@@ -11,6 +11,10 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
+        <RevitVersion>2025</RevitVersion>
+        
+        <!-- CRITICAL: Force copy all dependencies to output folder -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -26,10 +30,111 @@
 
     <ItemGroup>
         <PackageReference Include="Nice3point.Revit.Toolkit" Version="2025.0.1" />
-        <PackageReference Include="Nice3point.Revit.Extensions" Version="2025.0.1" />
+        <PackageReference Include="Nice3point.Revit.Extensions" Version="2025.1.0" />
         <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
         <PackageReference Include="MaterialDesignColors" Version="3.1.0" />
         <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2025.0.0" />
     </ItemGroup>
+
+    <!-- Pre-build: Kill Revit to unlock DLL files (Debug only) -->
+    <Target Name="KillRevit" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+        <Message Text="======================================================================" Importance="high" />
+        <Message Text="PRE-BUILD: Checking for running Revit processes..." Importance="high" />
+        <Message Text="======================================================================" Importance="high" />
+        
+        <Exec Command="taskkill /F /IM Revit.exe 2&gt;nul || exit /b 0" 
+              ContinueOnError="true" 
+              IgnoreExitCode="true" />
+        
+        <Exec Command="taskkill /F /IM RevitWorker.exe 2&gt;nul || exit /b 0" 
+              ContinueOnError="true" 
+              IgnoreExitCode="true" />
+        
+        <Message Text="Revit processes terminated (if any were running)" Importance="high" />
+        <Message Text="Waiting 2 seconds for file handles to release..." Importance="high" />
+        
+        <!-- Use ping instead of timeout to avoid redirection warning -->
+        <Exec Command="ping 127.0.0.1 -n 3 &gt;nul" 
+              ContinueOnError="true" 
+              IgnoreExitCode="true" />
+    </Target>
+
+    <!-- Post-build: Copy files to Revit Addins folder -->
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <PropertyGroup>
+            <AddinFolder>$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)</AddinFolder>
+            <AddinFile>$(ProjectDir)..\..\AotuPaintFramework.addin</AddinFile>
+        </PropertyGroup>
+
+        <Message Text="======================================================================" Importance="high" />
+        <Message Text="POST-BUILD: Deploying AotuPaintFramework to Revit Addins folder" Importance="high" />
+        <Message Text="Target: $(AddinFolder)" Importance="high" />
+        <Message Text="Build Output: $(TargetDir)" Importance="high" />
+        <Message Text="======================================================================" Importance="high" />
+
+        <!-- Delete old files first to avoid conflicts -->
+        <ItemGroup>
+            <OldAddinFiles Include="$(AddinFolder)\AotuPaintFramework.*" />
+            <OldDependencies Include="$(AddinFolder)\*.dll" Exclude="$(AddinFolder)\Revit*.dll;$(AddinFolder)\Autodesk*.dll" />
+        </ItemGroup>
+        
+        <Delete Files="@(OldAddinFiles)" ContinueOnError="true" />
+        <Delete Files="@(OldDependencies)" ContinueOnError="true" />
+
+        <Message Text="Cleaned old files" Importance="high" />
+
+        <!-- Create folder -->
+        <MakeDir Directories="$(AddinFolder)" Condition="!Exists('$(AddinFolder)')" />
+
+        <!-- Copy .addin file -->
+        <Copy SourceFiles="$(AddinFile)" 
+              DestinationFolder="$(AddinFolder)" 
+              SkipUnchangedFiles="false"
+              ContinueOnError="false"
+              Condition="Exists('$(AddinFile)')" />
+        
+        <Message Text="✅ Copied .addin manifest file" Importance="high" />
+
+        <!-- Copy main DLL with retry -->
+        <Copy SourceFiles="$(TargetPath)" 
+              DestinationFolder="$(AddinFolder)" 
+              SkipUnchangedFiles="false"
+              Retries="3"
+              RetryDelayMilliseconds="1000" />
+        
+        <Message Text="✅ Copied main assembly: AotuPaintFramework.dll" Importance="high" />
+
+        <!-- Copy PDB for debugging -->
+        <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" 
+              DestinationFolder="$(AddinFolder)" 
+              SkipUnchangedFiles="false"
+              ContinueOnError="true"
+              Condition="'$(Configuration)' == 'Debug' And Exists('$(TargetDir)$(TargetName).pdb')" />
+
+        <!-- Copy ALL DLL dependencies -->
+        <ItemGroup>
+            <!-- Exclude Revit API DLLs (already in Revit folder) -->
+            <AllDependencies Include="$(TargetDir)*.dll" 
+                             Exclude="$(TargetPath);$(TargetDir)Revit*.dll;$(TargetDir)Autodesk.*.dll;$(TargetDir)AdWindows.dll;$(TargetDir)UIFramework.dll" />
+        </ItemGroup>
+        
+        <Message Text="======================================================================" Importance="high" />
+        <Message Text="Dependencies found in $(TargetDir):" Importance="high" />
+        <Message Text="  - %(AllDependencies.Filename)%(AllDependencies.Extension)" Importance="high" />
+        <Message Text="======================================================================" Importance="high" />
+        
+        <Copy SourceFiles="@(AllDependencies)" 
+              DestinationFolder="$(AddinFolder)" 
+              SkipUnchangedFiles="false"
+              ContinueOnError="true" />
+        
+        <Message Text="✅ Copied %(AllDependencies.RecursiveDir)%(AllDependencies.Filename)%(AllDependencies.Extension) dependency DLLs" Importance="high" />
+
+        <Message Text="======================================================================" Importance="high" />
+        <Message Text="✅ Deployment completed successfully!" Importance="high" />
+        <Message Text="Files copied to: $(AddinFolder)" Importance="high" />
+        <Message Text="⚠️  You can now START Revit to load the add-in" Importance="high" />
+        <Message Text="======================================================================" Importance="high" />
+    </Target>
 
 </Project>
