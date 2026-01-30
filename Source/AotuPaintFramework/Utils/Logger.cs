@@ -57,7 +57,10 @@ namespace AotuPaintFramework.Utils
                 }
                 catch
                 {
-                    // Silently fail if logging fails to avoid breaking the application
+                    // Intentionally silent: Logging failures should never break the application.
+                    // If logging fails (e.g., disk full, permissions issue), the application
+                    // should continue to function. Consider writing to Event Log as fallback
+                    // if logging infrastructure becomes critical.
                 }
             }
         }
@@ -124,7 +127,10 @@ namespace AotuPaintFramework.Utils
                 }
                 catch
                 {
-                    // Silently fail if logging fails to avoid breaking the application
+                    // Intentionally silent: Logging failures should never break the application.
+                    // If logging fails (e.g., disk full, permissions issue), the application
+                    // should continue to function. Consider writing to Event Log as fallback
+                    // if logging infrastructure becomes critical.
                 }
             }
         }

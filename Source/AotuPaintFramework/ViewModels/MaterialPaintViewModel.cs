@@ -29,28 +29,20 @@ namespace AotuPaintFramework.ViewModels
 
         public MaterialPaintViewModel(UIDocument uiDocument)
         {
-            try
-            {
-                Logger.Info("Initializing MaterialPaintViewModel");
-                
-                _uiDocument = uiDocument ?? throw new ArgumentNullException(nameof(uiDocument));
-                _selectedElements = new List<Element>();
+            Logger.Info("Initializing MaterialPaintViewModel");
+            
+            _uiDocument = uiDocument ?? throw new ArgumentNullException(nameof(uiDocument));
+            _selectedElements = new List<Element>();
 
-                CategoryMappings = new ObservableCollection<CategoryMapping>();
-                PickedFaces = new ObservableCollection<PickedFaceItem>();
-                AvailableParameters = new ObservableCollection<string>();
-                AvailableMaterials = new ObservableCollection<string>();
+            CategoryMappings = new ObservableCollection<CategoryMapping>();
+            PickedFaces = new ObservableCollection<PickedFaceItem>();
+            AvailableParameters = new ObservableCollection<string>();
+            AvailableMaterials = new ObservableCollection<string>();
 
-                InitializeCommands();
-                LoadAvailableParametersAndMaterials();
-                
-                Logger.Info("MaterialPaintViewModel initialized successfully");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Error initializing MaterialPaintViewModel");
-                throw;
-            }
+            InitializeCommands();
+            LoadAvailableParametersAndMaterials();
+            
+            Logger.Info("MaterialPaintViewModel initialized successfully");
         }
 
         #region Properties
@@ -225,33 +217,19 @@ namespace AotuPaintFramework.ViewModels
 
         private void ExecuteCheckAll()
         {
-            try
+            Logger.Info("Checking all category mappings");
+            foreach (var mapping in CategoryMappings)
             {
-                Logger.Info("Checking all category mappings");
-                foreach (var mapping in CategoryMappings)
-                {
-                    mapping.IsChecked = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Error checking all mappings");
+                mapping.IsChecked = true;
             }
         }
 
         private void ExecuteUncheckAll()
         {
-            try
+            Logger.Info("Unchecking all category mappings");
+            foreach (var mapping in CategoryMappings)
             {
-                Logger.Info("Unchecking all category mappings");
-                foreach (var mapping in CategoryMappings)
-                {
-                    mapping.IsChecked = false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Error unchecking all mappings");
+                mapping.IsChecked = false;
             }
         }
 
@@ -327,16 +305,9 @@ namespace AotuPaintFramework.ViewModels
 
         private void ExecuteClearAllFaces()
         {
-            try
-            {
-                Logger.Info("Clearing all picked faces");
-                PickedFaces.Clear();
-                OnPropertyChanged(nameof(SelectedFacesCount));
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Error clearing faces");
-            }
+            Logger.Info("Clearing all picked faces");
+            PickedFaces.Clear();
+            OnPropertyChanged(nameof(SelectedFacesCount));
         }
 
         private void ExecuteParameterChanged(CategoryMapping? mapping)
@@ -575,16 +546,20 @@ namespace AotuPaintFramework.ViewModels
 
         private void ExecuteClose()
         {
+            Logger.Info("Closing Material Paint view");
+            
             try
             {
-                Logger.Info("Closing Material Paint view");
                 SaveConfiguration();
-                _window?.Close();
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error closing view");
+                Logger.Error(ex, "Error saving configuration on close");
+                MessageBox.Show($"Failed to save configuration: {ex.Message}", "Warning",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+            
+            _window?.Close();
         }
 
         #endregion

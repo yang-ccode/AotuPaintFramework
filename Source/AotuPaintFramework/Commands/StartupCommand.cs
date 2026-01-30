@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using Nice3point.Revit.Toolkit.External;
 using AotuPaintFramework.Views;
 using AotuPaintFramework.Utils;
@@ -20,6 +21,8 @@ public class StartupCommand : ExternalCommand
             if (UiApplication == null || UiDocument == null)
             {
                 Logger.Error("UiApplication or UiDocument is null");
+                MessageBox.Show("Failed to initialize plugin: Revit context not available.", 
+                    "AotuPaintFramework Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             
@@ -31,6 +34,8 @@ public class StartupCommand : ExternalCommand
         catch (Exception ex)
         {
             Logger.Error(ex, "Error executing StartupCommand");
+            MessageBox.Show($"Failed to start AotuPaintFramework: {ex.Message}\n\nPlease check the logs for more details.", 
+                "AotuPaintFramework Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }
