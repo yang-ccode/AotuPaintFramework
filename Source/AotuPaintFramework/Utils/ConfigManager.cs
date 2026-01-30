@@ -31,21 +31,34 @@ namespace AotuPaintFramework.Utils
         /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
         public static void SaveConfiguration(MappingConfiguration config)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
             try
             {
+                if (config == null)
+                {
+                    Logger.Warning("Configuration is null in SaveConfiguration");
+                    throw new ArgumentNullException(nameof(config));
+                }
+
+                Logger.Info($"Saving configuration to {ConfigFilePath}");
+
                 if (!Directory.Exists(AppDataFolder))
                 {
                     Directory.CreateDirectory(AppDataFolder);
+                    Logger.Info($"Created directory {AppDataFolder}");
                 }
 
                 string jsonContent = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(ConfigFilePath, jsonContent);
+                
+                Logger.Info("Configuration saved successfully");
+            }
+            catch (ArgumentNullException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, $"Failed to save configuration to {ConfigFilePath}");
                 throw new InvalidOperationException(
                     $"Failed to save configuration to {ConfigFilePath}", ex);
             }
@@ -60,22 +73,34 @@ namespace AotuPaintFramework.Utils
         {
             try
             {
+                Logger.Info($"Loading configuration from {ConfigFilePath}");
+
                 if (!File.Exists(ConfigFilePath))
                 {
+                    Logger.Info("Configuration file does not exist, returning default configuration");
                     return new MappingConfiguration();
                 }
 
                 string jsonContent = File.ReadAllText(ConfigFilePath);
                 var config = JsonSerializer.Deserialize<MappingConfiguration>(jsonContent, JsonOptions);
                 
-                return config ?? new MappingConfiguration();
+                if (config == null)
+                {
+                    Logger.Warning("Deserialized configuration is null, returning default configuration");
+                    return new MappingConfiguration();
+                }
+
+                Logger.Info("Configuration loaded successfully");
+                return config;
             }
             catch (FileNotFoundException)
             {
+                Logger.Info("Configuration file not found, returning default configuration");
                 return new MappingConfiguration();
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, $"Failed to load configuration from {ConfigFilePath}");
                 throw new InvalidOperationException(
                     $"Failed to load configuration from {ConfigFilePath}", ex);
             }

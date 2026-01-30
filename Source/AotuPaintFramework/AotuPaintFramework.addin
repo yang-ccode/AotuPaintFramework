@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Name>AotuPaintFramework</Name>
+    <Assembly>AotuPaintFramework.dll</Assembly>
+    <AddInId>153D70D5-21F5-443C-B799-6E4151E34E20</AddInId>
+    <FullClassName>AotuPaintFramework.Commands.StartupCommand</FullClassName>
+    <Text>Material Paint</Text>
+    <Description>Paint Element in Revit with Material of Library</Description>
+    <VendorId>IDD</VendorId>
+    <VendorDescription>yang-ccode, bimduongpv@gmail.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>
