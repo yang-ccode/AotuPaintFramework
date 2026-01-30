@@ -207,10 +207,14 @@ namespace AotuPaintFramework.Models
                                 System.Math.Min(min.X, vertex.X),
                                 System.Math.Min(min.Y, vertex.Y),
                                 System.Math.Min(min.Z, vertex.Z));
-                            max = new XYZ(
-                                System.Math.Max(max.X, vertex.X),
-                                System.Math.Max(max.Y, vertex.Y),
-                                System.Math.Max(max.Z, vertex.Z));
+                            
+                            if (max != null)
+                            {
+                                max = new XYZ(
+                                    System.Math.Max(max.X, vertex.X),
+                                    System.Math.Max(max.Y, vertex.Y),
+                                    System.Math.Max(max.Z, vertex.Z));
+                            }
                         }
                     }
                 }

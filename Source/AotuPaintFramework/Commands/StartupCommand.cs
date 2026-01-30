@@ -18,8 +18,8 @@ public class StartupCommand : ExternalCommand
         {
             Logger.Info("StartupCommand.Execute() started");
 
-            // Get UIDocument from context
-            var uiDocument = Context.UiDocument;
+            // Get UIDocument from base ExternalCommand property
+            var uiDocument = UiDocument;
             
             if (uiDocument == null)
             {
