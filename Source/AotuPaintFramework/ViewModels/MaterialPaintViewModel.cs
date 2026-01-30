@@ -29,16 +29,32 @@ namespace AotuPaintFramework.ViewModels
 
         public MaterialPaintViewModel(UIDocument uiDocument)
         {
-            _uiDocument = uiDocument ?? throw new ArgumentNullException(nameof(uiDocument));
-            _selectedElements = new List<Element>();
+            try
+            {
+                if (uiDocument == null)
+                {
+                    Logger.Error(new ArgumentNullException(nameof(uiDocument)), "UIDocument is null in MaterialPaintViewModel constructor");
+                    throw new ArgumentNullException(nameof(uiDocument));
+                }
 
-            CategoryMappings = new ObservableCollection<CategoryMapping>();
-            PickedFaces = new ObservableCollection<PickedFaceItem>();
-            AvailableParameters = new ObservableCollection<string>();
-            AvailableMaterials = new ObservableCollection<string>();
+                _uiDocument = uiDocument;
+                _selectedElements = new List<Element>();
 
-            InitializeCommands();
-            LoadAvailableParametersAndMaterials();
+                CategoryMappings = new ObservableCollection<CategoryMapping>();
+                PickedFaces = new ObservableCollection<PickedFaceItem>();
+                AvailableParameters = new ObservableCollection<string>();
+                AvailableMaterials = new ObservableCollection<string>();
+
+                Logger.Info("Initializing MaterialPaintViewModel");
+                InitializeCommands();
+                LoadAvailableParametersAndMaterials();
+                Logger.Info("MaterialPaintViewModel initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Error in MaterialPaintViewModel constructor");
+                throw;
+            }
         }
 
         #region Properties
@@ -166,6 +182,8 @@ namespace AotuPaintFramework.ViewModels
         {
             try
             {
+                Logger.Info("ExecuteSelectElement started");
+                
                 var selection = _uiDocument.Selection;
                 var references = selection.PickObjects(ObjectType.Element, "Select elements to paint");
 
@@ -173,9 +191,13 @@ namespace AotuPaintFramework.ViewModels
                 var elements = references.Select(r => doc.GetElement(r)).Where(e => e != null).ToList();
 
                 if (elements.Count == 0)
+                {
+                    Logger.Info("No elements selected");
                     return;
+                }
 
                 SelectedElements = elements;
+                Logger.Info($"Selected {elements.Count} elements");
 
                 // Group elements by category
                 var categoryGroups = elements.GroupBy(e => e.Category?.Name ?? "Uncategorized");
@@ -192,13 +214,17 @@ namespace AotuPaintFramework.ViewModels
 
                 // Load saved configuration
                 LoadSavedConfiguration();
+                
+                Logger.Info("ExecuteSelectElement completed successfully");
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
             {
+                Logger.Info("Element selection cancelled by user");
                 // User cancelled selection
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Error in ExecuteSelectElement");
                 MessageBox.Show($"Error selecting elements: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -224,6 +250,8 @@ namespace AotuPaintFramework.ViewModels
         {
             try
             {
+                Logger.Info("ExecutePickFaces started");
+                
                 MessageBox.Show("Pick faces for interfaces. Press ESC or Finish when done.", 
                     "Pick Faces", MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -234,13 +262,27 @@ namespace AotuPaintFramework.ViewModels
 
                 var selection = _uiDocument.Selection;
                 var doc = _uiDocument.Document;
+                
+                if (doc == null)
+                {
+                    Logger.Warning("Document is null in ExecutePickFaces");
+                    return;
+                }
 
+                int faceCount = 0;
                 while (true)
                 {
                     try
                     {
                         var reference = selection.PickObject(ObjectType.Face, "Pick a face (ESC to finish)");
                         var element = doc.GetElement(reference.ElementId);
+                        
+                        if (element == null)
+                        {
+                            Logger.Warning("Element is null for picked face");
+                            continue;
+                        }
+                        
                         var face = element.GetGeometryObjectFromReference(reference) as Face;
 
                         if (face != null && face is PlanarFace planarFace)
@@ -258,11 +300,13 @@ namespace AotuPaintFramework.ViewModels
                             };
 
                             PickedFaces.Add(pickedItem);
+                            faceCount++;
                             OnPropertyChanged(nameof(SelectedFacesCount));
                         }
                     }
                     catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                     {
+                        Logger.Info($"Face picking cancelled by user. Picked {faceCount} faces");
                         break;
                     }
                 }
@@ -271,9 +315,13 @@ namespace AotuPaintFramework.ViewModels
                 {
                     _window.Show();
                 }
+                
+                Logger.Info($"ExecutePickFaces completed. Total faces picked: {faceCount}");
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Error in ExecutePickFaces");
+                
                 if (_window != null)
                 {
                     _window.Show();
@@ -349,23 +397,37 @@ namespace AotuPaintFramework.ViewModels
 
         private void ExecutePaint()
         {
-            if (!ValidatePaintOperation())
-                return;
-
-            var result = MessageBox.Show(
-                "Do you want to join adjacent elements with the same material?",
-                "Join Confirmation",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Cancel)
-                return;
-
-            bool joinElements = result == MessageBoxResult.Yes;
-
             try
             {
+                Logger.Info("ExecutePaint started");
+                
+                if (!ValidatePaintOperation())
+                {
+                    Logger.Info("Paint operation validation failed");
+                    return;
+                }
+
+                var result = MessageBox.Show(
+                    "Do you want to join adjacent elements with the same material?",
+                    "Join Confirmation",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Cancel)
+                {
+                    Logger.Info("Paint operation cancelled by user");
+                    return;
+                }
+
+                bool joinElements = result == MessageBoxResult.Yes;
+                Logger.Info($"Paint operation confirmed. Join elements: {joinElements}");
+
                 var doc = _uiDocument.Document;
+                if (doc == null)
+                {
+                    Logger.Warning("Document is null in ExecutePaint");
+                    return;
+                }
 
                 using (var transaction = new Transaction(doc, "Paint Materials"))
                 {
@@ -378,12 +440,19 @@ namespace AotuPaintFramework.ViewModels
 
                         var materialId = GetMaterialId(mapping.Material);
                         if (materialId == null || materialId == ElementId.InvalidElementId)
+                        {
+                            Logger.Warning($"Material '{mapping.Material}' not found for category '{mapping.Category}'");
                             continue;
+                        }
 
                         var elementsToProcess = GetElementsForMapping(mapping);
+                        Logger.Info($"Processing {elementsToProcess.Count} elements for category '{mapping.Category}' with material '{mapping.Material}'");
 
                         foreach (var element in elementsToProcess)
                         {
+                            if (element == null)
+                                continue;
+
                             if (IsSideFaceChecked)
                             {
                                 PaintService.PaintSideFaces(doc, element, materialId);
@@ -396,21 +465,27 @@ namespace AotuPaintFramework.ViewModels
 
                             if (IsInterfacesChecked)
                             {
-                                var checkedFaces = PickedFaces.Where(f => f.IsChecked).ToList();
-                                PaintService.PaintInterfaces(doc, element, checkedFaces, materialId);
+                                var checkedFaces = PickedFaces.Where(f => f != null && f.IsChecked).ToList();
+                                if (checkedFaces.Count > 0)
+                                {
+                                    PaintService.PaintInterfaces(doc, element, checkedFaces, materialId);
+                                }
                             }
                         }
                     }
 
                     transaction.Commit();
+                    Logger.Info("Paint transaction committed successfully");
                 }
 
                 SaveConfiguration();
+                Logger.Info("ExecutePaint completed successfully");
                 MessageBox.Show("Paint operation completed successfully.", "Success", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Error in ExecutePaint");
                 MessageBox.Show($"Error during paint operation: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -418,21 +493,34 @@ namespace AotuPaintFramework.ViewModels
 
         private void ExecuteRemovePaint()
         {
-            if (!ValidatePaintOperation())
-                return;
-
-            var result = MessageBox.Show(
-                "Are you sure you want to remove paint from selected elements?",
-                "Remove Paint Confirmation",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result != MessageBoxResult.Yes)
-                return;
-
             try
             {
+                Logger.Info("ExecuteRemovePaint started");
+                
+                if (!ValidatePaintOperation())
+                {
+                    Logger.Info("Remove paint operation validation failed");
+                    return;
+                }
+
+                var result = MessageBox.Show(
+                    "Are you sure you want to remove paint from selected elements?",
+                    "Remove Paint Confirmation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                {
+                    Logger.Info("Remove paint operation cancelled by user");
+                    return;
+                }
+
                 var doc = _uiDocument.Document;
+                if (doc == null)
+                {
+                    Logger.Warning("Document is null in ExecuteRemovePaint");
+                    return;
+                }
 
                 using (var transaction = new Transaction(doc, "Remove Paint"))
                 {
@@ -441,9 +529,13 @@ namespace AotuPaintFramework.ViewModels
                     foreach (var mapping in CategoryMappings.Where(m => m.IsChecked))
                     {
                         var elementsToProcess = GetElementsForMapping(mapping);
+                        Logger.Info($"Removing paint from {elementsToProcess.Count} elements in category '{mapping.Category}'");
 
                         foreach (var element in elementsToProcess)
                         {
+                            if (element == null)
+                                continue;
+
                             if (IsSideFaceChecked)
                             {
                                 PaintService.RemovePaintSideFaces(doc, element);
@@ -456,20 +548,26 @@ namespace AotuPaintFramework.ViewModels
 
                             if (IsInterfacesChecked)
                             {
-                                var checkedFaces = PickedFaces.Where(f => f.IsChecked).ToList();
-                                PaintService.RemovePaintInterfaces(doc, element, checkedFaces);
+                                var checkedFaces = PickedFaces.Where(f => f != null && f.IsChecked).ToList();
+                                if (checkedFaces.Count > 0)
+                                {
+                                    PaintService.RemovePaintInterfaces(doc, element, checkedFaces);
+                                }
                             }
                         }
                     }
 
                     transaction.Commit();
+                    Logger.Info("Remove paint transaction committed successfully");
                 }
 
+                Logger.Info("ExecuteRemovePaint completed successfully");
                 MessageBox.Show("Remove paint operation completed successfully.", "Success", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Error in ExecuteRemovePaint");
                 MessageBox.Show($"Error during remove paint operation: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
