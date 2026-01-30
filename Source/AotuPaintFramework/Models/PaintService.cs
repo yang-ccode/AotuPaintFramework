@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using AotuPaintFramework.Utils;
 
 namespace AotuPaintFramework.Models
 {
@@ -18,26 +20,45 @@ namespace AotuPaintFramework.Models
         /// <param name="materialId">The material ID to apply.</param>
         public static void PaintSideFaces(Document doc, Element element, ElementId materialId)
         {
-            if (doc == null || element == null || materialId == null || materialId == ElementId.InvalidElementId)
-                return;
-
-            var solid = GeometryHelper.GetElementSolid(element);
-            if (solid == null)
-                return;
-
-            foreach (Face face in solid.Faces)
+            try
             {
-                if (GeometryHelper.IsSideFace(face) && !GeometryHelper.IsIntersectingFace(face, element, doc))
+                if (doc == null || element == null || materialId == null || materialId == ElementId.InvalidElementId)
                 {
-                    try
+                    Logger.Warning($"PaintSideFaces called with invalid parameters: doc={doc != null}, element={element != null}, materialId={materialId != null}");
+                    return;
+                }
+
+                Logger.Info($"Painting side faces for element {element.Id.Value}");
+
+                var solid = GeometryHelper.GetElementSolid(element);
+                if (solid == null)
+                {
+                    Logger.Warning($"No solid geometry found for element {element.Id.Value}");
+                    return;
+                }
+
+                int paintedCount = 0;
+                foreach (Face face in solid.Faces)
+                {
+                    if (GeometryHelper.IsSideFace(face) && !GeometryHelper.IsIntersectingFace(face, element, doc))
                     {
-                        doc.Paint(element.Id, face, materialId);
-                    }
-                    catch
-                    {
-                        // Silently ignore painting errors (e.g., already painted, invalid face)
+                        try
+                        {
+                            doc.Paint(element.Id, face, materialId);
+                            paintedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to paint side face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Painted {paintedCount} side faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error painting side faces for element {element?.Id.Value}");
             }
         }
 
@@ -49,26 +70,45 @@ namespace AotuPaintFramework.Models
         /// <param name="materialId">The material ID to apply.</param>
         public static void PaintBottomFaces(Document doc, Element element, ElementId materialId)
         {
-            if (doc == null || element == null || materialId == null || materialId == ElementId.InvalidElementId)
-                return;
-
-            var solid = GeometryHelper.GetElementSolid(element);
-            if (solid == null)
-                return;
-
-            foreach (Face face in solid.Faces)
+            try
             {
-                if (GeometryHelper.IsBottomFace(face))
+                if (doc == null || element == null || materialId == null || materialId == ElementId.InvalidElementId)
                 {
-                    try
+                    Logger.Warning($"PaintBottomFaces called with invalid parameters: doc={doc != null}, element={element != null}, materialId={materialId != null}");
+                    return;
+                }
+
+                Logger.Info($"Painting bottom faces for element {element.Id.Value}");
+
+                var solid = GeometryHelper.GetElementSolid(element);
+                if (solid == null)
+                {
+                    Logger.Warning($"No solid geometry found for element {element.Id.Value}");
+                    return;
+                }
+
+                int paintedCount = 0;
+                foreach (Face face in solid.Faces)
+                {
+                    if (GeometryHelper.IsBottomFace(face))
                     {
-                        doc.Paint(element.Id, face, materialId);
-                    }
-                    catch
-                    {
-                        // Silently ignore painting errors
+                        try
+                        {
+                            doc.Paint(element.Id, face, materialId);
+                            paintedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to paint bottom face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Painted {paintedCount} bottom faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error painting bottom faces for element {element?.Id.Value}");
             }
         }
 
@@ -81,31 +121,53 @@ namespace AotuPaintFramework.Models
         /// <param name="materialId">The material ID to apply.</param>
         public static void PaintInterfaces(Document doc, Element element, List<PickedFaceItem> pickedFaces, ElementId materialId)
         {
-            if (doc == null || element == null || pickedFaces == null || pickedFaces.Count == 0 
-                || materialId == null || materialId == ElementId.InvalidElementId)
-                return;
-
-            foreach (var pickedItem in pickedFaces)
+            try
             {
-                if (pickedItem?.Plane == null)
-                    continue;
-
-                // Cast object to Plane (as per PickedFaceItem documentation)
-                if (!(pickedItem.Plane is Plane plane))
-                    continue;
-
-                var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
-                foreach (var face in facesOnPlane)
+                if (doc == null || element == null || pickedFaces == null || pickedFaces.Count == 0 
+                    || materialId == null || materialId == ElementId.InvalidElementId)
                 {
-                    try
+                    Logger.Warning($"PaintInterfaces called with invalid parameters: doc={doc != null}, element={element != null}, pickedFaces={pickedFaces?.Count ?? 0}, materialId={materialId != null}");
+                    return;
+                }
+
+                Logger.Info($"Painting interface faces for element {element.Id.Value} with {pickedFaces.Count} picked faces");
+
+                int paintedCount = 0;
+                foreach (var pickedItem in pickedFaces)
+                {
+                    if (pickedItem?.Plane == null)
                     {
-                        doc.Paint(element.Id, face, materialId);
+                        Logger.Warning("Skipping null picked item or plane");
+                        continue;
                     }
-                    catch
+
+                    // Cast object to Plane (as per PickedFaceItem documentation)
+                    if (!(pickedItem.Plane is Plane plane))
                     {
-                        // Silently ignore painting errors
+                        Logger.Warning("Failed to cast Plane object");
+                        continue;
+                    }
+
+                    var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
+                    foreach (var face in facesOnPlane)
+                    {
+                        try
+                        {
+                            doc.Paint(element.Id, face, materialId);
+                            paintedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to paint interface face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Painted {paintedCount} interface faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error painting interface faces for element {element?.Id.Value}");
             }
         }
 
@@ -116,26 +178,45 @@ namespace AotuPaintFramework.Models
         /// <param name="element">The element to remove paint from.</param>
         public static void RemovePaintSideFaces(Document doc, Element element)
         {
-            if (doc == null || element == null)
-                return;
-
-            var solid = GeometryHelper.GetElementSolid(element);
-            if (solid == null)
-                return;
-
-            foreach (Face face in solid.Faces)
+            try
             {
-                if (GeometryHelper.IsSideFace(face))
+                if (doc == null || element == null)
                 {
-                    try
+                    Logger.Warning($"RemovePaintSideFaces called with invalid parameters: doc={doc != null}, element={element != null}");
+                    return;
+                }
+
+                Logger.Info($"Removing paint from side faces for element {element.Id.Value}");
+
+                var solid = GeometryHelper.GetElementSolid(element);
+                if (solid == null)
+                {
+                    Logger.Warning($"No solid geometry found for element {element.Id.Value}");
+                    return;
+                }
+
+                int removedCount = 0;
+                foreach (Face face in solid.Faces)
+                {
+                    if (GeometryHelper.IsSideFace(face))
                     {
-                        doc.RemovePaint(element.Id, face);
-                    }
-                    catch
-                    {
-                        // Silently ignore removal errors (e.g., face not painted)
+                        try
+                        {
+                            doc.RemovePaint(element.Id, face);
+                            removedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to remove paint from side face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Removed paint from {removedCount} side faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error removing paint from side faces for element {element?.Id.Value}");
             }
         }
 
@@ -146,26 +227,45 @@ namespace AotuPaintFramework.Models
         /// <param name="element">The element to remove paint from.</param>
         public static void RemovePaintBottomFaces(Document doc, Element element)
         {
-            if (doc == null || element == null)
-                return;
-
-            var solid = GeometryHelper.GetElementSolid(element);
-            if (solid == null)
-                return;
-
-            foreach (Face face in solid.Faces)
+            try
             {
-                if (GeometryHelper.IsBottomFace(face))
+                if (doc == null || element == null)
                 {
-                    try
+                    Logger.Warning($"RemovePaintBottomFaces called with invalid parameters: doc={doc != null}, element={element != null}");
+                    return;
+                }
+
+                Logger.Info($"Removing paint from bottom faces for element {element.Id.Value}");
+
+                var solid = GeometryHelper.GetElementSolid(element);
+                if (solid == null)
+                {
+                    Logger.Warning($"No solid geometry found for element {element.Id.Value}");
+                    return;
+                }
+
+                int removedCount = 0;
+                foreach (Face face in solid.Faces)
+                {
+                    if (GeometryHelper.IsBottomFace(face))
                     {
-                        doc.RemovePaint(element.Id, face);
-                    }
-                    catch
-                    {
-                        // Silently ignore removal errors
+                        try
+                        {
+                            doc.RemovePaint(element.Id, face);
+                            removedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to remove paint from bottom face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Removed paint from {removedCount} bottom faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error removing paint from bottom faces for element {element?.Id.Value}");
             }
         }
 
@@ -177,30 +277,52 @@ namespace AotuPaintFramework.Models
         /// <param name="pickedFaces">List of picked face items containing plane information.</param>
         public static void RemovePaintInterfaces(Document doc, Element element, List<PickedFaceItem> pickedFaces)
         {
-            if (doc == null || element == null || pickedFaces == null || pickedFaces.Count == 0)
-                return;
-
-            foreach (var pickedItem in pickedFaces)
+            try
             {
-                if (pickedItem?.Plane == null)
-                    continue;
-
-                // Cast object to Plane (as per PickedFaceItem documentation)
-                if (!(pickedItem.Plane is Plane plane))
-                    continue;
-
-                var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
-                foreach (var face in facesOnPlane)
+                if (doc == null || element == null || pickedFaces == null || pickedFaces.Count == 0)
                 {
-                    try
+                    Logger.Warning($"RemovePaintInterfaces called with invalid parameters: doc={doc != null}, element={element != null}, pickedFaces={pickedFaces?.Count ?? 0}");
+                    return;
+                }
+
+                Logger.Info($"Removing paint from interface faces for element {element.Id.Value} with {pickedFaces.Count} picked faces");
+
+                int removedCount = 0;
+                foreach (var pickedItem in pickedFaces)
+                {
+                    if (pickedItem?.Plane == null)
                     {
-                        doc.RemovePaint(element.Id, face);
+                        Logger.Warning("Skipping null picked item or plane");
+                        continue;
                     }
-                    catch
+
+                    // Cast object to Plane (as per PickedFaceItem documentation)
+                    if (!(pickedItem.Plane is Plane plane))
                     {
-                        // Silently ignore removal errors
+                        Logger.Warning("Failed to cast Plane object");
+                        continue;
+                    }
+
+                    var facesOnPlane = GeometryHelper.GetFacesOnPlane(element, plane);
+                    foreach (var face in facesOnPlane)
+                    {
+                        try
+                        {
+                            doc.RemovePaint(element.Id, face);
+                            removedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warning($"Failed to remove paint from interface face on element {element.Id.Value}: {ex.Message}");
+                        }
                     }
                 }
+                
+                Logger.Info($"Removed paint from {removedCount} interface faces on element {element.Id.Value}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error removing paint from interface faces for element {element?.Id.Value}");
             }
         }
     }

@@ -31,21 +31,30 @@ namespace AotuPaintFramework.Utils
         /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
         public static void SaveConfiguration(MappingConfiguration config)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
             try
             {
+                if (config == null)
+                {
+                    Logger.Error("SaveConfiguration called with null config");
+                    throw new ArgumentNullException(nameof(config));
+                }
+
+                Logger.Info("Saving configuration to file");
+
                 if (!Directory.Exists(AppDataFolder))
                 {
                     Directory.CreateDirectory(AppDataFolder);
+                    Logger.Info($"Created application data folder: {AppDataFolder}");
                 }
 
                 string jsonContent = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(ConfigFilePath, jsonContent);
+                
+                Logger.Info($"Configuration saved successfully to {ConfigFilePath}");
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, $"Failed to save configuration to {ConfigFilePath}");
                 throw new InvalidOperationException(
                     $"Failed to save configuration to {ConfigFilePath}", ex);
             }
@@ -62,20 +71,25 @@ namespace AotuPaintFramework.Utils
             {
                 if (!File.Exists(ConfigFilePath))
                 {
+                    Logger.Info($"Configuration file not found at {ConfigFilePath}, returning default configuration");
                     return new MappingConfiguration();
                 }
 
+                Logger.Info("Loading configuration from file");
                 string jsonContent = File.ReadAllText(ConfigFilePath);
                 var config = JsonSerializer.Deserialize<MappingConfiguration>(jsonContent, JsonOptions);
                 
+                Logger.Info($"Configuration loaded successfully from {ConfigFilePath}");
                 return config ?? new MappingConfiguration();
             }
             catch (FileNotFoundException)
             {
+                Logger.Info($"Configuration file not found at {ConfigFilePath}, returning default configuration");
                 return new MappingConfiguration();
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, $"Failed to load configuration from {ConfigFilePath}");
                 throw new InvalidOperationException(
                     $"Failed to load configuration from {ConfigFilePath}", ex);
             }
